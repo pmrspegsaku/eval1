@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MPI & PID Evaluasi PMR Madya - SMP PGRI 1 Kuwarasan</title>
+  <style>
+    :root {
+      --primary: #d32f2f;
+      --primary-dark: #9a0007;
+      --primary-light: #ff6659;
+      --secondary: #1976d2;
+      --secondary-dark: #004ba0;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #2e7d32;
+      --warning: #ed6c02;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 960px; margin: 0 auto; }
+
+    /* Header & Branding */
+    header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 20px 24px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+    .brand h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.5px; }
+    .brand p { font-size: 0.9rem; opacity: 0.9; margin-top: 4px; }
+    .header-controls { display: flex; align-items: center; gap: 12px; }
+    .btn-header { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-header:hover { background: rgba(255,255,255,0.3); }
+
+    /* Scoreboard & Team Selector */
+    .team-bar { background: var(--card-bg); border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow); margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; border-left: 6px solid var(--primary); }
+    .team-switch { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.95rem; }
+    .team-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; border: 2px solid transparent; transition: 0.2s; font-weight: 700; }
+    .team-solferino { background: #fee2e2; color: var(--primary-dark); }
+    .team-solferino.active { border-color: var(--primary); background: #fecaca; }
+    .team-dunant { background: #e0f2fe; color: var(--secondary-dark); }
+    .team-dunant.active { border-color: var(--secondary); background: #bae6fd; }
+    .scores-display { display: flex; gap: 16px; font-weight: 700; font-size: 0.95rem; }
+
+    /* Navigation Tabs */
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+    .tab-btn { background: var(--card-bg); border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; font-weight: 600; color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: 0.2s; flex: 1; text-align: center; }
+    .tab-btn:hover { background: #f1f5f9; }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow); }
+
+    /* Main Content Section */
+    .panel { display: none; background: var(--card-bg); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+    .panel.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel-header { margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+    .panel-header h2 { font-size: 1.25rem; color: var(--primary-dark); display: flex; align-items: center; gap: 8px; }
+    .panel-header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* Question & Option Cards */
+    .question-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .question-title { font-weight: 700; margin-bottom: 12px; font-size: 0.98rem; }
+    .options-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media(min-width: 640px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+    .opt-btn { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; text-align: left; font-size: 0.9rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: space-between; }
+    .opt-btn:hover:not(:disabled) { border-color: var(--primary); background: #fff5f5; }
+    .opt-btn.correct { background: #dcfce7 !important; border-color: var(--success) !important; color: #166534; font-weight: 700; }
+    .opt-btn.wrong { background: #fee2e2 !important; border-color: var(--primary) !important; color: #991b1b; }
+    .feedback { font-size: 0.85rem; font-weight: 600; margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; }
+
+    /* Drag & Drop / Sorting Elements */
+    .sortable-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .sortable-item { background: white; border: 1px dashed var(--border); padding: 10px 14px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; transition: 0.15s; }
+    .sortable-item:hover { border-color: var(--primary); background: #fffaf0; }
+
+    /* Action Buttons */
+    .btn-action { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+    .btn-action:hover { background: var(--primary-dark); }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Interactive Simulation (Pos 4) */
+    .sim-step { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; }
+    .sim-step.current { border-color: var(--secondary); background: #f0f9ff; }
+    .sim-step.completed { border-color: var(--success); background: #f0fdf4; }
+
+    /* Final Report & Print Styling */
+    .report-card { background: white; border: 2px solid var(--border); border-radius: var(--radius); padding: 24px; margin-top: 16px; }
+    .report-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95rem; }
+    .report-table th, .report-table td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+    .report-table th { background: #f1f5f9; font-weight: 700; }
+
+    /* Canvas for Confetti */
+    #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; }
+
+    @media print {
+      body { background: white; padding: 0; }
+      header, .team-bar, .tabs, .btn-action, .btn-header { display: none !important; }
+      .panel { display: none !important; }
+      #panel-rekap { display: block !important; border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <h1>MPI & PID EVALUASI PMR MADYA</h1>
+        <p>Palang Merah Remaja Madya • SMP PGRI 1 Kuwarasan</p>
+      </div>
+      <div class="header-controls">
+        <button class="btn-header" onclick="toggleSound()" id="sound-btn">🔊 Suara: AKTIF</button>
+        <button class="btn-header" onclick="resetAll()">🔄 Reset Evaluasi</button>
+      </div>
+    </header>
+
+    <!-- Score & Team Selector -->
+    <div class="team-bar">
+      <div class="team-switch">
+        <span>Pilih Regu Aktif:</span>
+        <span class="team-badge team-solferino active" id="btn-team-1" onclick="switchTeam(1)">Regu Solferino (5 Siswa)</span>
+        <span class="team-badge team-dunant" id="btn-team-2" onclick="switchTeam(2)">Regu Henry Dunant (5 Siswa)</span>
+      </div>
+      <div class="scores-display">
+        <span style="color:var(--primary-dark)">Solferino: <b id="score-team-1">0</b> Poin</span>
+        <span>|</span>
+        <span style="color:var(--secondary-dark)">Henry Dunant: <b id="score-team-2">0</b> Poin</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" onclick="openTab('pos1')">Pos 1: Sejarah</button>
+      <button class="tab-btn" onclick="openTab('pos2')">Pos 2: Mars & Hymne</button>
+      <button class="tab-btn" onclick="openTab('pos3')">Pos 3: Dasar PP</button>
+      <button class="tab-btn" onclick="openTab('pos4')">Pos 4: Pembidaian</button>
+      <button class="tab-btn" onclick="openTab('rekap')">🏆 Rekap Nilai</button>
+    </nav>
+
+    <!-- POS 1: SEJARAH KEPALANGMERAHAN -->
+    <div id="panel-pos1" class="panel active">
+      <div class="panel-header">
+        <h2>📜 Pos 1: Sejarah Kepalangmerahan & Gerakan Internasional</h2>
+        <p>Jawablah pertanyaan cepat seputar sejarah pembentukan Palang Merah dan Prinsip Dasar.</p>
+      </div>
+
+      <div class="question-card" id="q1_1">
+        <p class="question-title">1. Peristiwa bersejarah yang menginspirasi Jean Henry Dunant mendirikan Gerakan Palang Merah Internasional adalah...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">A. Perang Dunia I di Eropa</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, true)">B. Perang Solferino (1859) di Italia Utara</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">C. Perang Kemerdekaan Indonesia 1945</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">D. Konvensi Jenewa Pertama</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q1_2">
+        <p class="question-title">2. Buku terkenal karya Jean Henry Dunant yang mengusulkan berdirinya perhimpunan bantuan sukarela di setiap negara berjudul...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">A. A Memory of Geneva</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, true)">B. Un Souvenir de Solferino (Kenangan dari Solferino)</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">C. Buku Saku Relawan Muda</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">D. Sejarah Palang Merah Internasional</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q1_3">
+        <p class="question-title">3. Palang Merah Indonesia (PMI) dibentuk secara resmi atas instruksi Presiden Soekarno pada tanggal...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">A. 17 Agustus 1945</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">B. 3 September 1945</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, true)">C. 17 September 1945</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">D. 24 Juni 1859</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q1_4">
+        <p class="question-title">4. Prinsip yang menegaskan bahwa pertolongan kemanusiaan tidak membeda-bedakan kebangsaan, ras, agama, maupun pandangan politik adalah...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">A. Kemanusiaan (Humanity)</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, true)">B. Kesamaan (Impartiality)</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">C. Kenetralan (Neutrality)</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 1, false)">D. Kesukarelaan (Voluntary Service)</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div style="text-align: right; margin-top: 16px;">
+        <button class="btn-action" onclick="openTab('pos2')">Lanjut ke Pos 2 ➔</button>
+      </div>
+    </div>
+
+    <!-- POS 2: MARS & HYMNE PMI -->
+    <div id="panel-pos2" class="panel">
+      <div class="panel-header">
+        <h2>🎵 Pos 2: Mars PMI, Hymne PMI, & Bakti Remaja</h2>
+        <p>Uji pemahaman tentang lagu resmi perhimpunan, lirik rumpang, dan nada pembuka.</p>
+      </div>
+
+      <div class="question-card">
+        <p class="question-title">Audio Interaktif: Uji Nada Pembuka Mars PMI</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Dengarkan simulasi melodi pengantar dan tebak ritme lagu resmi.</p>
+        <button class="btn-action" onclick="playMarsSample()">▶ Putar Melodi Pengantar (Synthesizer)</button>
+      </div>
+
+      <div class="question-card" id="q2_1">
+        <p class="question-title">1. Tokoh yang menciptakan syair dan lagu resmi Mars Palang Merah Indonesia adalah...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 2, true)">A. Syair oleh Djemalul AS & Lagu oleh Iskandar</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">B. A. Zurith Adjie & Drs. H. Soetedjo, M.Si</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">C. Ismail Marzuki</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">D. W.R. Soepratman</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q2_2">
+        <p class="question-title">2. Hymne PMI yang khidmat diciptakan berdasarkan ide Drs. H. Soetedjo, M.Si dengan lagu dan syair yang ditulis oleh...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">A. Djemalul AS</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, true)">B. A. Zurith Adjie</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">C. Iskandar</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">D. Kusbini</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q2_3">
+        <p class="question-title">3. Lengkapi bait Mars PMI berikut: <i>"Untuk umat manusia di seluruh dunia, PMI mengantarkan (...)"</i></p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">A. Bahagia</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, true)">B. JASA</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">C. Cinta</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">D. Jiwa</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q2_4">
+        <p class="question-title">4. Pada lirik Hymne PMI: <i>"Berbhakti dan Mengabdi Bagi Umat Manusia, Agar (...)"</i></p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">A. Damai Sentosa Sepanjang Masa</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">B. Sehat Ceria dan Sejahtera</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, true)">C. Sehat Sejahtera di Seluruh Dunia</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 2, false)">D. Aman dan Makmur Rakyatnya</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div style="text-align: right; margin-top: 16px;">
+        <button class="btn-action" onclick="openTab('pos3')">Lanjut ke Pos 3 ➔</button>
+      </div>
+    </div>
+
+    <!-- POS 3: DASAR PERTOLONGAN PERTAMA -->
+    <div id="panel-pos3" class="panel">
+      <div class="panel-header">
+        <h2>🩹 Pos 3: Materi Dasar Pertolongan Pertama (PP)</h2>
+        <p>Uji pemahaman tentang tujuan PP, APD standar, rumus penilaian (ASNT, LDR, PLNB), dan anatomi rongga tubuh.</p>
+      </div>
+
+      <div class="question-card" id="q3_1">
+        <p class="question-title">1. Tiga tujuan pokok Pertolongan Pertama (PP) pada penderita cedera adalah...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 3, true)">A. Menyelamatkan jiwa korban, mencegah cacat, memberi rasa nyaman & menunjang penyembuhan</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">B. Mengganti tugas dokter di RS, memberi obat keras, membawa mobil ambulans</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">C. Mengobati segala penyakit, membalut seluruh tubuh, mengamankan barang bukti</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">D. Menghubungi pihak berwajib, mengantar pulang, menenangkan warga sekitar</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q3_2">
+        <p class="question-title">2. Tiga APD standar minimal yang wajib dipakai penolong PMR sebelum memegang penderita adalah...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">A. Rompi lapangan, sepatu bot, helm proyek</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, true)">B. Sarung tangan lateks, masker penolong, kacamata pelindung</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">C. Celemek, sarung tangan kain, topi PMR</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">D. Jas hujan, plester luka, kain mitela</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q3_3">
+        <p class="question-title">3. Pemeriksaan respon penderita tidak sadar menggunakan akronim ASNT, yaitu singkatan dari...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">A. Aman, Sadar, Napas, Tolong</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, true)">B. Awas, Suara, Nyeri, Tidak respon</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">C. Angkat, Sangga, Nilai, Tenang</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">D. Arah, Suhu, Nadi, Tanggap</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div class="question-card" id="q3_4">
+        <p class="question-title">4. Saat melakukan pemeriksaan fisik pada korban patah tulang, penolong mencari tanda cedera dengan rumus PLNB, yaitu...</p>
+        <div class="options-grid">
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">A. Pusing, Lemas, Nyeri, Batuk</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, true)">B. Perubahan bentuk, Luka terbuka, Nyeri tekan, Bengkak</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">C. Posisi, Luka robek, Nadi cepat, Beku</button>
+          <button class="opt-btn" onclick="checkAnswer(this, 3, false)">D. Pucat, Lebam, Ngilu, Berdarah</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <div style="text-align: right; margin-top: 16px;">
+        <button class="btn-action" onclick="openTab('pos4')">Lanjut ke Pos 4 ➔</button>
+      </div>
+    </div>
+
+    <!-- POS 4: PEMBIDAIAN & SIMULASI KASUS -->
+    <div id="panel-pos4" class="panel">
+      <div class="panel-header">
+        <h2>🦴 Pos 4: Praktik Pembidaian & Skenario Lapangan</h2>
+        <p>Kasus: Siswa SMP PGRI 1 Kuwarasan cedera lengan bawah kanan saat bermain futsal (Patah Tulang Tertutup).</p>
+      </div>
+
+      <div style="background:#e0f2fe; padding:14px; border-radius:8px; margin-bottom:16px; font-size:0.92rem; border-left:4px solid var(--secondary);">
+        <b>Skenario Kasus:</b> Korban sadar mengeluh sakit hebat pada lengan bawah kanan. Terlihat deformitas (perubahan bentuk) dan pembengkakan. Tidak tampak tulang menembus kulit. Pilih tindakan berikut secara tepat dan berurutan!
+      </div>
+
+      <div id="sim-container">
+        <!-- Step 1 -->
+        <div class="sim-step current" id="sim-step-1">
+          <b>Langkah 1:</b> Apa tindakan pertama sebelum mendekati korban?
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="opt-btn" onclick="simChoice(1, true)">Kenakan APD (Sarung Tangan & Masker)</button>
+            <button class="opt-btn" onclick="simChoice(1, false)">Langsung tarik tangan korban</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="sim-step" id="sim-step-2">
+          <b>Langkah 2:</b> Sebelum memasang papan bidai (spalk), apa yang wajib diperiksa pada ujung jari penderita?
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="opt-btn" onclick="simChoice(2, true)">Pemeriksaan GSS (Gerakan, Sensasi, Sirkulasi)</button>
+            <button class="opt-btn" onclick="simChoice(2, false)">Memberikan minuman hangat</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="sim-step" id="sim-step-3">
+          <b>Langkah 3:</b> Berapa sendi minimal yang harus dilewati oleh papan bidai pada lengan bawah?
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="opt-btn" onclick="simChoice(3, true)">Minimal 2 sendi (sendi siku dan sendi pergelangan tangan)</button>
+            <button class="opt-btn" onclick="simChoice(3, false)">Cukup 1 sendi saja</button>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="sim-step" id="sim-step-4">
+          <b>Langkah 4:</b> Di manakah posisi ikatan simpul mitela dibuat?
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="opt-btn" onclick="simChoice(4, true)">Di sisi luar papan bidai, bukan di atas area yang patah</button>
+            <button class="opt-btn" onclick="simChoice(4, false)">Tepat di atas tulang yang bengkak</button>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="sim-step" id="sim-step-5">
+          <b>Langkah 5:</b> Setelah bidai dan mitela terpasang sempurna, tindakan wajib penolong adalah...
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="opt-btn" onclick="simChoice(5, true)">Periksa ulang GSS akhir dan pasang gendongan (arm sling)</button>
+            <button class="opt-btn" onclick="simChoice(5, false)">Membongkar kembali ikatan mitela</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: right; margin-top: 16px;">
+        <button class="btn-action" onclick="finishEvaluation()">Selesaikan Evaluasi & Lihat Rekap ➔</button>
+      </div>
+    </div>
+
+    <!-- REKAPITULASI HASIL & PRINT -->
+    <div id="panel-rekap" class="panel">
+      <div class="panel-header">
+        <h2>🏆 Rekapitulasi Hasil Evaluasi PMR Madya</h2>
+        <p>Laporan Capaian Pembelajaran & Penilaian Sikap-Keterampilan Siswa</p>
+      </div>
+
+      <div class="report-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ccc; padding-bottom:12px;">
+          <div>
+            <h3>SMP PGRI 1 KUWARASAN</h3>
+            <p style="font-size:0.85rem; color:#555;">Ekstrakurikuler Palang Merah Remaja (PMR) Tingkat Madya</p>
+          </div>
+          <div style="text-align:right;">
+            <p id="print-date" style="font-size:0.85rem; font-weight:600;"></p>
+            <p style="font-size:0.85rem; color:#666;">Status: Selesai Terverifikasi</p>
+          </div>
+        </div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Nama Regu</th>
+              <th>Pengetahuan (30%)</th>
+              <th>Keterampilan (50%)</th>
+              <th>Sikap / Kerjasama (20%)</th>
+              <th>Total Skor</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Regu Solferino</b></td>
+              <td id="solf-p">0 Poin</td>
+              <td id="solf-k">0 Poin</td>
+              <td>20 Poin</td>
+              <td id="solf-total" style="font-weight:700; color:var(--primary);">0</td>
+              <td>Kompeten (Peer Support)</td>
+            </tr>
+            <tr>
+              <td><b>Regu Henry Dunant</b></td>
+              <td id="dun-p">0 Poin</td>
+              <td id="dun-k">0 Poin</td>
+              <td>20 Poin</td>
+              <td id="dun-total" style="font-weight:700; color:var(--secondary);">0</td>
+              <td>Kompeten (Peer Support)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:20px; font-size:0.9rem; line-height:1.6;">
+          <p><b>Catatan Pembina PMR:</b></p>
+          <p>Evaluasi ini menguji kesiapan anggota PMR Madya sebagai pendukung sebaya (*Peer Support*) dalam kepalangmerahan, apresiasi nilai kemanusiaan, serta ketangkasan pembidaian cedera ekstremitas atas.</p>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:30px; padding-top:20px; font-size:0.9rem;">
+          <div style="text-align:center;">
+            <p>Mengetahui,</p>
+            <p><b>Kepala SMP PGRI 1 Kuwarasan</b></p>
+            <br><br><br>
+            <p>( ................................................... )</p>
+          </div>
+          <div style="text-align:center;">
+            <p>Kuwarasan, Kebumen</p>
+            <p><b>Pembina PMR Madya</b></p>
+            <br><br><br>
+            <p>( ................................................... )</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-top:20px;">
+        <button class="btn-action" onclick="openTab('pos1')">⬅ Kembali ke Soal</button>
+        <button class="btn-action" onclick="window.print()">🖨️ Cetak / Simpan PDF Rekap</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // State Aplikasi
+    let currentTeam = 1; // 1 = Solferino, 2 = Dunant
+    let soundEnabled = true;
+    let scores = {
+      team1: { pos1: 0, pos2: 0, pos3: 0, pos4: 0 },
+      team2: { pos1: 0, pos2: 0, pos3: 0, pos4: 0 }
+    };
+
+    // Inisialisasi Audio Context
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-btn').innerText = soundEnabled ? "🔊 Suara: AKTIF" : "🔇 Suara: BISU";
+    }
+
+    function playTone(freq, type, duration) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) { console.error(e); }
+    }
+
+    function playCorrectSound() {
+      playTone(523.25, 'sine', 0.15); // C5
+      setTimeout(() => playTone(659.25, 'sine', 0.25), 150); // E5
+    }
+
+    function playWrongSound() {
+      playTone(220, 'sawtooth', 0.25);
+    }
+
+    // Melodi intro synthesizer Mars PMI
+    function playMarsSample() {
+      initAudio();
+      const notes = [
+        {f: 392.00, d: 0.3}, // G4
+        {f: 523.25, d: 0.4}, // C5
+        {f: 659.25, d: 0.4}, // E5
+        {f: 783.99, d: 0.5}  // G5
+      ];
+      notes.forEach((n, idx) => {
+        setTimeout(() => playTone(n.f, 'triangle', n.d), idx * 350);
+      });
+    }
+
+    // Navigasi Tab
+    function openTab(tabId) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      
+      const targetPanel = document.getElementById('panel-' + tabId);
+      if (targetPanel) targetPanel.classList.add('active');
+
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Penggantian Regu
+    function switchTeam(teamNum) {
+      currentTeam = teamNum;
+      document.getElementById('btn-team-1').classList.toggle('active', teamNum === 1);
+      document.getElementById('btn-team-2').classList.toggle('active', teamNum === 2);
+    }
+
+    function updateScoreDisplay() {
+      const t1 = scores.team1.pos1 + scores.team1.pos2 + scores.team1.pos3 + scores.team1.pos4;
+      const t2 = scores.team2.pos1 + scores.team2.pos2 + scores.team2.pos3 + scores.team2.pos4;
+      document.getElementById('score-team-1').innerText = t1;
+      document.getElementById('score-team-2').innerText = t2;
+    }
+
+    // Evaluasi Jawaban Pilihan Ganda (Pos 1, 2, 3)
+    function checkAnswer(btn, posNum, isCorrect) {
+      const parent = btn.closest('.question-card');
+      const allBtns = parent.querySelectorAll('.opt-btn');
+      const feedback = parent.querySelector('.feedback');
+
+      allBtns.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        playCorrectSound();
+        if (currentTeam === 1) scores.team1['pos' + posNum] += 10;
+        else scores.team2['pos' + posNum] += 10;
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--success)';
+        feedback.innerText = '✓ Jawaban Tepat! (+10 Poin)';
+      } else {
+        btn.classList.add('wrong');
+        playWrongSound();
+        allBtns.forEach(b => {
+          if (b.getAttribute('onclick').includes('true')) b.classList.add('correct');
+        });
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--primary)';
+        feedback.innerText = '✗ Belum Tepat. Poin tidak bertambah.';
+      }
+
+      updateScoreDisplay();
+    }
+
+    // Simulasi Kasus Pembidaian (Pos 4)
+    function simChoice(step, isCorrect) {
+      const stepElem = document.getElementById('sim-step-' + step);
+      const btns = stepElem.querySelectorAll('.opt-btn');
+      btns.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        playCorrectSound();
+        stepElem.classList.remove('current');
+        stepElem.classList.add('completed');
+        if (currentTeam === 1) scores.team1.pos4 += 10;
+        else scores.team2.pos4 += 10;
+
+        const nextStep = document.getElementById('sim-step-' + (step + 1));
+        if (nextStep) nextStep.classList.add('current');
+      } else {
+        playWrongSound();
+        alert('Tindakan kurang tepat untuk protokol pembidaian! Coba telaah kembali prosedur keselamatan.');
+        btns.forEach(b => b.disabled = false);
+      }
+      updateScoreDisplay();
+    }
+
+    // Konfeti Selebrasi Canvas
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#d32f2f', '#1976d2', '#2e7d32', '#fbc02d', '#8e24aa'];
+
+      for (let i = 0; i < 100; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          speedY: Math.random() * 3 + 2,
+          speedX: Math.random() * 2 - 1
+        });
+      }
+
+      let animationFrames = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        animationFrames++;
+        if (animationFrames < 150) {
+          requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      animate();
+    }
+
+    // Selesaikan Evaluasi & Buka Rekap
+    function finishEvaluation() {
+      launchConfetti();
+      
+      const s1 = scores.team1;
+      const s2 = scores.team2;
+
+      document.getElementById('solf-p').innerText = (s1.pos1 + s1.pos2 + s1.pos3) + ' Poin';
+      document.getElementById('solf-k').innerText = s1.pos4 + ' Poin';
+      document.getElementById('solf-total').innerText = (s1.pos1 + s1.pos2 + s1.pos3 + s1.pos4 + 20);
+
+      document.getElementById('dun-p').innerText = (s2.pos1 + s2.pos2 + s2.pos3) + ' Poin';
+      document.getElementById('dun-k').innerText = s2.pos4 + ' Poin';
+      document.getElementById('dun-total').innerText = (s2.pos1 + s2.pos2 + s2.pos3 + s2.pos4 + 20);
+
+      const d = new Date();
+      document.getElementById('print-date').innerText = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      openTab('rekap');
+    }
+
+    function resetAll() {
+      if (confirm('Apakah Anda yakin ingin mengatur ulang nilai seluruh evaluasi?')) {
+        scores = {
+          team1: { pos1: 0, pos2: 0, pos3: 0, pos4: 0 },
+          team2: { pos1: 0, pos2: 0, pos3: 0, pos4: 0 }
+        };
+        updateScoreDisplay();
+        document.querySelectorAll('.opt-btn').forEach(b => {
+          b.disabled = false;
+          b.classList.remove('correct', 'wrong');
+        });
+        document.querySelectorAll('.feedback').forEach(f => f.style.display = 'none');
+        document.querySelectorAll('.sim-step').forEach((s, idx) => {
+          s.classList.remove('current', 'completed');
+          if (idx === 0) s.classList.add('current');
+        });
+        openTab('pos1');
+      }
+    }
+
+    window.onload = function() {
+      updateScoreDisplay();
+    };
+  </script>
+</body>
+</html>
